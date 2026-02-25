@@ -1,5 +1,6 @@
 require 'thread'
 require 'brakeman/differ'
+require 'brakeman/inline_ignore'
 
 #Collects up results from running different checks.
 #
@@ -67,6 +68,7 @@ class Brakeman::Checks
     @model_warnings = []
     @controller_warnings = []
     @checks_run = []
+    @inline_ignore = Brakeman::InlineIgnore.new
   end
 
   #Add Warning to list of warnings to report.
@@ -74,20 +76,22 @@ class Brakeman::Checks
   #for template, controller, model, and generic warnings.
   #
   #Will not add warnings which are below the minimum confidence level.
+  #Will not add warnings which are disabled by inline brakeman:disable comments.
   def add_warning warning
-    unless warning.confidence > @min_confidence
-      case warning.warning_set
-      when :template
-        @template_warnings << warning
-      when :warning
-        @warnings << warning
-      when :controller
-        @controller_warnings << warning
-      when :model
-        @model_warnings << warning
-      else
-        raise "Unknown warning: #{warning.warning_set}"
-      end
+    return if warning.confidence > @min_confidence
+    return if @inline_ignore.ignored?(warning)
+
+    case warning.warning_set
+    when :template
+      @template_warnings << warning
+    when :warning
+      @warnings << warning
+    when :controller
+      @controller_warnings << warning
+    when :model
+      @model_warnings << warning
+    else
+      raise "Unknown warning: #{warning.warning_set}"
     end
   end
 
