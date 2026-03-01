@@ -420,6 +420,8 @@ module Brakeman
   # Optionally checks that the latest version is at least
   # the specified number of days old.
   def self.ensure_latest(days_old: 0)
+    require 'date'
+
     current = Brakeman::Version
     latest = Gem.latest_spec_for('brakeman')
     release_date = latest.date.to_date
